@@ -1,0 +1,99 @@
+aa = importdata('1003_sub3_protocol4')
+eegdata = aa.data;
+r = eegdata(1:end,15);
+
+% FILTERING
+notchSpecs = fdesign.notch(2, 0.2, 10); % Fs = 250, Fc = 50
+% in alternative 
+% notchSpecs = fdesign.notch(2, 50, 10, 250);
+% x = design(notchSpecs);
+% fvtool(x);
+
+notchFilt = design(notchSpecs, 'SystemObject', true)
+biquad = dsp.BiquadFilter(notchFilt.SOSMatrix,notchFilt.ScaleValues);
+s = biquad(r);
+
+figure;p=plot(s); %plot of the filteres signal
+
+% SIGNAL DECOMPOSITION INTO MAIN FREQUENCIES
+title('EEG Signal')
+N=length(s);
+waveletFunction = 'db15';
+                [C,L] = wavedec(s,16,waveletFunction);
+                
+                cD11 = detcoef(C,L,12); %GAMMA
+                cD12 = detcoef(C,L,12); %BETA
+                cD13 = detcoef(C,L,13); %ALPHA
+                cD14 = detcoef(C,L,14); %THETA
+                cD15 = detcoef(C,L,15); %DELTA
+                
+                
+                D11 = wrcoef('d',C,L,waveletFunction,11); %GAMMA
+                D12 = wrcoef('d',C,L,waveletFunction,12); %BETA
+                D13 = wrcoef('d',C,L,waveletFunction,13); %ALPHA
+                D14 = wrcoef('d',C,L,waveletFunction,14); %THETA
+                D15 = wrcoef('d',C,L,waveletFunction,15); %DELTA
+            
+                
+                Gamma = D11;
+                %figure; subplot(5,1,1); plot(1:1:length(Gamma),Gamma);...
+                     %title('GAMMA');
+               
+                Beta = D12;
+                %subplot(5,1,2); plot(1:1:length(Beta), Beta); title('BETA');
+                
+                Alpha = D13;
+                %subplot(5,1,3); plot(1:1:length(Alpha),Alpha); title('ALPHA'); 
+                
+                Theta = D14;
+                %subplot(5,1,4); plot(1:1:length(Theta),Theta);title('THETA');
+                
+                Delta = D15;
+                %subplot(5,1,5);plot(1:1:length(Delta),Delta);title('DELTA');
+
+D11 = detrend(D11,0);
+xdft = fft(D11);
+freq = 0:N/length(D11):N/2;
+xdft = xdft(1:length(D11)/2+1);
+% figure;
+%subplot(511);plot(freq,abs(xdft));title('GAMMA-FREQUENCY');
+[~,I] = max(abs(xdft));
+fprintf('Gamma:Maximum occurs at %3.2f Hz.\n',freq(I));
+
+D12 = detrend(D12,0);
+xdft2 = fft(D12);
+freq2 = 0:N/length(D12):N/2;
+xdft2 = xdft2(1:length(D12)/2+1);
+% figure;
+%subplot(512);plot(freq2,abs(xdft2));title('BETA');
+[~,I] = max(abs(xdft2));
+fprintf('Beta:Maximum occurs at %3.2f Hz.\n',freq2(I));
+
+D13 = detrend(D13,0);
+xdft3 = fft(D13);
+freq3 = 0:N/length(D13):N/2;
+xdft3 = xdft3(1:length(D13)/2+1);
+% figure;
+%subplot(513);plot(freq3,abs(xdft3));title('ALPHA');
+[~,I] = max(abs(xdft3));
+fprintf('Alpha:Maximum occurs at %f Hz.\n',freq3(I));
+         
+D14 = detrend(D14,0);
+xdft4 = fft(D14);
+freq4 = 0:N/length(D14):N/2;
+xdft4 = xdft4(1:length(D14)/2+1);
+% figure;
+%subplot(514);plot(freq4,abs(xdft4));title('THETA');
+[~,I] = max(abs(xdft4));
+fprintf('Theta:Maximum occurs at %f Hz.\n',freq4(I));
+
+D15 = detrend(D15,0);
+xdft5 = fft(D15);
+freq5 = 0:N/length(D15):N/2;
+xdft5 = xdft5(1:length(D15)/2+1);
+% figure;
+%subplot(515);plot(freq3,abs(xdft5));title('DELTA');
+[~,I] = max(abs(xdft5));
+fprintf('Delta:Maximum occurs at %f Hz.\n',freq5(I));
+
+figure; plot(1:1:length(Gamma), Gamma, 1:1:length(Beta), Beta, 1:1:length(Alpha), Alpha, 1:1:length(Theta), Theta, 1:1:length(Delta), Delta);
